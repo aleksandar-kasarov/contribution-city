@@ -332,12 +332,12 @@ function generateSVG(weekData, totalContributions) {
   </text>
   
   <!-- 통계 바 -->
-  <rect x="${width/2 - 180}" y="${height - 35}" width="360" height="30" rx="15" fill="#0a0a15" opacity="0.7"/>
-  <text x="${width/2 - 80}" y="${height - 15}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="11">
+  <rect x="${width/2 - 180}" y="${groundY + 55}" width="360" height="30" rx="15" fill="#0a0a15" opacity="0.7"/>
+  <text x="${width/2 - 80}" y="${groundY + 75}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="11">
     This Week: <tspan fill="#4a9eff" font-weight="600">${weekTotal}</tspan>
   </text>
-  <line x1="${width/2}" y1="${height - 28}" x2="${width/2}" y2="${height - 12}" stroke="#3a4a5a" stroke-width="1"/>
-  <text x="${width/2 + 80}" y="${height - 15}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="11">
+  <line x1="${width/2}" y1="${groundY + 62}" x2="${width/2}" y2="${groundY + 78}" stroke="#3a4a5a" stroke-width="1"/>
+  <text x="${width/2 + 80}" y="${groundY + 75}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="11">
     Total: <tspan fill="#4a9eff" font-weight="600">${totalContributions}</tspan>
   </text>
 </svg>`;
