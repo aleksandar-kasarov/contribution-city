@@ -70,15 +70,6 @@ function getLevel(count) {
     return 4;
 }
 
-// 건물 색상 팔레트
-const buildingColors = {
-    0: { front: '#1a3a1a', left: '#153015', right: '#1f451f', roof: '#2a4a2a' }, // 공원
-    1: { front: '#5a4a3a', left: '#4a3a2a', right: '#6a5a4a', roof: '#7a6a5a' }, // 주택
-    2: { front: '#4a6a8a', left: '#3a5a7a', right: '#5a7a9a', roof: '#6a8aaa' }, // 빌딩
-    3: { front: '#6a5a8a', left: '#5a4a7a', right: '#7a6a9a', roof: '#8a7aaa' }, // 고층
-    4: { front: '#8a6a4a', left: '#7a5a3a', right: '#9a7a5a', roof: '#aa8a6a' }  // 타워
-};
-
 // 최근 7일 데이터 추출
 function getLastWeekData(calendar) {
     const allDays = calendar.weeks.flatMap(w => w.contributionDays);
@@ -87,140 +78,135 @@ function getLastWeekData(calendar) {
 
 // SVG 생성
 function generateSVG(weekData, totalContributions) {
-    const width = 800;
-    const height = 400;
+    const width = 900;
+    const height = 450;
     
-    // 건물 설정
-    const buildingWidth = 70;
-    const buildingDepth = 35;
-    const gap = 12;
-    const maxHeight = 160;
-    
-    // 등각투영 (앞에서 보이게, 살짝 기울임)
-    const isoX = (x, z) => 400 + (x * 0.95 + z * 0.3);
-    const isoY = (y, x, z) => 230 + (z * 0.25 - y + x * 0.12);
-    
-    let buildings = '';
-    let stars = '';
-    
-    // 별 생성
-    for (let i = 0; i < 50; i++) {
-        const x = Math.random() * width;
-        const y = Math.random() * 120;
-        const r = Math.random() * 1.5 + 0.5;
-        const delay = (Math.random() * 3).toFixed(1);
-        stars += `<circle class="star" cx="${x}" cy="${y}" r="${r}" fill="white" style="animation-delay: ${delay}s"/>`;
-    }
+    const buildingWidth = 85;
+    const gap = 18;
+    const maxHeight = 220;
+    const groundY = 380;
     
     // 요일 이름
     const dayNames = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
     
+    let buildings = '';
+    let reflections = '';
+    let stars = '';
+    let bgBuildings = '';
+    
+    // 별 생성
+    for (let i = 0; i < 80; i++) {
+        const x = Math.random() * width;
+        const y = Math.random() * 140;
+        const r = Math.random() * 1.8 + 0.3;
+        const delay = (Math.random() * 4).toFixed(1);
+        const duration = (2 + Math.random() * 2).toFixed(1);
+        stars += `<circle class="star" cx="${x}" cy="${y}" r="${r}" fill="white" style="animation-delay: ${delay}s; animation-duration: ${duration}s"/>`;
+    }
+    
+    // 배경 빌딩 실루엣 (분위기용)
+    for (let i = 0; i < 15; i++) {
+        const x = i * 65 - 30;
+        const h = 40 + Math.random() * 80;
+        const w = 30 + Math.random() * 40;
+        bgBuildings += `<rect x="${x}" y="${groundY - h}" width="${w}" height="${h}" fill="#0d0d1a" opacity="0.6"/>`;
+    }
+    
     // 각 날짜별 건물 생성
     weekData.forEach((day, index) => {
         const level = getLevel(day.contributionCount);
-        const colors = buildingColors[level];
-        const bHeight = level === 0 ? 10 : Math.max(30, (day.contributionCount / 15) * maxHeight);
+        const bHeight = level === 0 ? 25 : Math.max(50, (day.contributionCount / 12) * maxHeight);
+        const x = 95 + index * (buildingWidth + gap);
+        const y = groundY - bHeight;
         
-        const x = (index - 3) * (buildingWidth + gap);
-        const z = 0;
+        // 건물 색상 (레벨별 그라데이션)
+        const colors = [
+            { main: '#1a2a1a', accent: '#2d4a2d', glow: '#3a5a3a' }, // 공원
+            { main: '#2a3a4a', accent: '#3a4a5a', glow: '#4a6a8a' }, // 주택
+            { main: '#3a4a6a', accent: '#4a5a7a', glow: '#6a8aaa' }, // 빌딩
+            { main: '#4a3a6a', accent: '#5a4a7a', glow: '#8a6aaa' }, // 고층
+            { main: '#5a4a3a', accent: '#7a6a4a', glow: '#aa8a5a' }  // 타워
+        ][level];
         
         if (level === 0) {
-            // 공원 (잔디 + 나무)
-            const groundPoints = [
-                { x: isoX(x, z), y: isoY(0, x, z) },
-                { x: isoX(x + buildingWidth, z), y: isoY(0, x + buildingWidth, z) },
-                { x: isoX(x + buildingWidth, z + buildingDepth), y: isoY(0, x + buildingWidth, z + buildingDepth) },
-                { x: isoX(x, z + buildingDepth), y: isoY(0, x, z + buildingDepth) }
-            ];
-            
+            // 공원 - 나무들
             buildings += `
-                <g class="building">
+                <g class="building" style="animation-delay: ${index * 0.1}s">
                     <!-- 잔디 -->
-                    <polygon points="${groundPoints.map(p => `${p.x},${p.y}`).join(' ')}" fill="${colors.roof}"/>
-                    <!-- 나무 -->
-                    <polygon points="${isoX(x + 35, z + 17)},${isoY(55, x + 35, z + 17)} ${isoX(x + 20, z + 17)},${isoY(10, x + 20, z + 17)} ${isoX(x + 50, z + 17)},${isoY(10, x + 50, z + 17)}" fill="#2a5a2a"/>
-                    <polygon points="${isoX(x + 35, z + 17)},${isoY(75, x + 35, z + 17)} ${isoX(x + 23, z + 17)},${isoY(35, x + 23, z + 17)} ${isoX(x + 47, z + 17)},${isoY(35, x + 47, z + 17)}" fill="#3a6a3a"/>
-                    <rect x="${isoX(x + 33, z + 17) - 3}" y="${isoY(10, x + 33, z + 17)}" width="6" height="12" fill="#5a3a2a"/>
-                    <!-- 날짜 라벨 -->
-                    <text x="${isoX(x + 35, z + 17)}" y="${isoY(-15, x + 35, z + 17)}" text-anchor="middle" fill="#8b949e" font-size="10" font-family="Arial, sans-serif">${dayNames[day.weekday]}</text>
-                    <text x="${isoX(x + 35, z + 17)}" y="${isoY(-30, x + 35, z + 17)}" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${day.contributionCount}</text>
+                    <ellipse cx="${x + buildingWidth/2}" cy="${groundY - 5}" rx="${buildingWidth/2 + 5}" ry="8" fill="#1a3a1a"/>
+                    
+                    <!-- 나무 1 -->
+                    <ellipse cx="${x + 25}" cy="${groundY - 45}" rx="18" ry="25" fill="#2d5a2d"/>
+                    <ellipse cx="${x + 25}" cy="${groundY - 55}" rx="14" ry="20" fill="#3a6a3a"/>
+                    <rect x="${x + 22}" y="${groundY - 25}" width="6" height="20" fill="#4a3020"/>
+                    
+                    <!-- 나무 2 -->
+                    <ellipse cx="${x + 60}" cy="${groundY - 35}" rx="15" ry="20" fill="#2d5a2d"/>
+                    <ellipse cx="${x + 60}" cy="${groundY - 42}" rx="12" ry="16" fill="#3a6a3a"/>
+                    <rect x="${x + 57}" y="${groundY - 20}" width="5" height="15" fill="#4a3020"/>
+                    
+                    <!-- 라벨 -->
+                    <text x="${x + buildingWidth/2}" y="${groundY + 25}" text-anchor="middle" fill="#6a7a8a" font-size="11" font-family="'SF Pro Display', Arial, sans-serif">${dayNames[day.weekday]}</text>
+                    <text x="${x + buildingWidth/2}" y="${groundY + 42}" text-anchor="middle" fill="#4a9eff" font-size="14" font-weight="600" font-family="'SF Pro Display', Arial, sans-serif">${day.contributionCount}</text>
                 </g>`;
         } else {
-            // 건물 꼭지점
-            const p = {
-                // 바닥
-                fbl: { x: isoX(x, z), y: isoY(0, x, z) },
-                fbr: { x: isoX(x + buildingWidth, z), y: isoY(0, x + buildingWidth, z) },
-                bbl: { x: isoX(x, z + buildingDepth), y: isoY(0, x, z + buildingDepth) },
-                bbr: { x: isoX(x + buildingWidth, z + buildingDepth), y: isoY(0, x + buildingWidth, z + buildingDepth) },
-                // 지붕
-                ftl: { x: isoX(x, z), y: isoY(bHeight, x, z) },
-                ftr: { x: isoX(x + buildingWidth, z), y: isoY(bHeight, x + buildingWidth, z) },
-                btl: { x: isoX(x, z + buildingDepth), y: isoY(bHeight, x, z + buildingDepth) },
-                btr: { x: isoX(x + buildingWidth, z + buildingDepth), y: isoY(bHeight, x + buildingWidth, z + buildingDepth) }
-            };
-            
-            // 3D 창문 생성
+            // 창문 생성
             let windows = '';
-            const windowRows = Math.floor(bHeight / 28);
-            const windowCols = 3;
-            const winWidth = 10;
-            const winHeight = 14;
-            const winDepth = 2;
+            const windowRows = Math.floor(bHeight / 30);
+            const windowCols = 4;
+            const winWidth = 12;
+            const winHeight = 16;
+            const winGapX = (buildingWidth - 20) / windowCols;
+            const winGapY = 30;
             
             for (let row = 0; row < windowRows; row++) {
                 for (let col = 0; col < windowCols; col++) {
-                    const wy = bHeight - 18 - row * 28;
-                    const wx = x + 12 + col * 20;
-                    const wz = z - winDepth;
+                    const wx = x + 12 + col * winGapX;
+                    const wy = y + 20 + row * winGapY;
                     
-                    const isLit = Math.random() > 0.3;
-                    const glowColor = isLit ? '#ffdd66' : '#1a2030';
-                    const glowOpacity = isLit ? (0.7 + Math.random() * 0.3).toFixed(2) : '0.8';
+                    const isLit = Math.random() > 0.25;
+                    const warmth = Math.random();
+                    const glowColor = isLit 
+                        ? (warmth > 0.5 ? '#ffdd77' : '#ffeebb')
+                        : '#151520';
+                    const opacity = isLit ? (0.75 + Math.random() * 0.25).toFixed(2) : '0.9';
+                    const flickerDelay = (Math.random() * 5).toFixed(1);
                     
-                    // 창문 3D 꼭지점
-                    const wp = {
-                        fbl: { x: isoX(wx, wz), y: isoY(wy, wx, wz) },
-                        fbr: { x: isoX(wx + winWidth, wz), y: isoY(wy, wx + winWidth, wz) },
-                        ftl: { x: isoX(wx, wz), y: isoY(wy + winHeight, wx, wz) },
-                        ftr: { x: isoX(wx + winWidth, wz), y: isoY(wy + winHeight, wx + winWidth, wz) },
-                        bbl: { x: isoX(wx, z), y: isoY(wy, wx, z) },
-                        bbr: { x: isoX(wx + winWidth, z), y: isoY(wy, wx + winWidth, z) },
-                        btl: { x: isoX(wx, z), y: isoY(wy + winHeight, wx, z) },
-                        btr: { x: isoX(wx + winWidth, z), y: isoY(wy + winHeight, wx + winWidth, z) }
-                    };
-                    
-                    // 창문 앞면 (밝은 부분)
-                    windows += `<polygon class="window" points="${wp.ftl.x},${wp.ftl.y} ${wp.ftr.x},${wp.ftr.y} ${wp.fbr.x},${wp.fbr.y} ${wp.fbl.x},${wp.fbl.y}" fill="${glowColor}" opacity="${glowOpacity}"/>`;
-                    
-                    // 창문 위쪽 면
-                    windows += `<polygon points="${wp.btl.x},${wp.btl.y} ${wp.btr.x},${wp.btr.y} ${wp.ftr.x},${wp.ftr.y} ${wp.ftl.x},${wp.ftl.y}" fill="#2a3040" opacity="0.9"/>`;
-                    
-                    // 창문 오른쪽 면
-                    windows += `<polygon points="${wp.ftr.x},${wp.ftr.y} ${wp.btr.x},${wp.btr.y} ${wp.bbr.x},${wp.bbr.y} ${wp.fbr.x},${wp.fbr.y}" fill="#1a2030" opacity="0.9"/>`;
+                    windows += `
+                        <rect class="window" x="${wx}" y="${wy}" width="${winWidth}" height="${winHeight}" rx="1" fill="${glowColor}" opacity="${opacity}" style="animation-delay: ${flickerDelay}s"/>
+                        ${isLit ? `<rect x="${wx + 2}" y="${wy + 2}" width="${winWidth - 4}" height="${winHeight - 4}" rx="1" fill="#fff8e0" opacity="0.3"/>` : ''}
+                    `;
                 }
             }
             
+            // 건물 반사 (물 위)
+            reflections += `
+                <g opacity="0.15">
+                    <rect x="${x}" y="${groundY + 5}" width="${buildingWidth}" height="${bHeight * 0.4}" fill="url(#buildingGrad${level})"/>
+                </g>
+            `;
+            
+            // 건물 본체
             buildings += `
-                <g class="building">
-                    <!-- 왼쪽 면 -->
-                    <polygon points="${p.bbl.x},${p.bbl.y} ${p.btl.x},${p.btl.y} ${p.ftl.x},${p.ftl.y} ${p.fbl.x},${p.fbl.y}" fill="${colors.left}"/>
+                <g class="building" style="animation-delay: ${index * 0.1}s">
+                    <!-- 건물 그림자 -->
+                    <rect x="${x + 8}" y="${y + 10}" width="${buildingWidth}" height="${bHeight}" rx="2" fill="#000" opacity="0.3" filter="url(#blur)"/>
                     
-                    <!-- 오른쪽 면 -->
-                    <polygon points="${p.fbr.x},${p.fbr.y} ${p.ftr.x},${p.ftr.y} ${p.btr.x},${p.btr.y} ${p.bbr.x},${p.bbr.y}" fill="${colors.right}"/>
+                    <!-- 건물 본체 -->
+                    <rect x="${x}" y="${y}" width="${buildingWidth}" height="${bHeight}" rx="2" fill="url(#buildingGrad${level})"/>
                     
-                    <!-- 앞면 -->
-                    <polygon points="${p.fbl.x},${p.fbl.y} ${p.ftl.x},${p.ftl.y} ${p.ftr.x},${p.ftr.y} ${p.fbr.x},${p.fbr.y}" fill="${colors.front}"/>
+                    <!-- 건물 하이라이트 (왼쪽) -->
+                    <rect x="${x}" y="${y}" width="3" height="${bHeight}" fill="${colors.glow}" opacity="0.4"/>
                     
-                    <!-- 지붕 -->
-                    <polygon points="${p.ftl.x},${p.ftl.y} ${p.btl.x},${p.btl.y} ${p.btr.x},${p.btr.y} ${p.ftr.x},${p.ftr.y}" fill="${colors.roof}"/>
+                    <!-- 건물 옥상 -->
+                    <rect x="${x - 2}" y="${y - 4}" width="${buildingWidth + 4}" height="6" rx="1" fill="${colors.accent}"/>
                     
-                    <!-- 3D 창문 -->
+                    <!-- 창문들 -->
                     ${windows}
                     
-                    <!-- 날짜 라벨 -->
-                    <text x="${isoX(x + 35, z)}" y="${isoY(-15, x + 35, z)}" text-anchor="middle" fill="#8b949e" font-size="10" font-family="Arial, sans-serif">${dayNames[day.weekday]}</text>
-                    <text x="${isoX(x + 35, z)}" y="${isoY(-30, x + 35, z)}" text-anchor="middle" fill="#58a6ff" font-size="12" font-weight="bold" font-family="Arial, sans-serif">${day.contributionCount}</text>
+                    <!-- 라벨 -->
+                    <text x="${x + buildingWidth/2}" y="${groundY + 25}" text-anchor="middle" fill="#6a7a8a" font-size="11" font-family="'SF Pro Display', Arial, sans-serif">${dayNames[day.weekday]}</text>
+                    <text x="${x + buildingWidth/2}" y="${groundY + 42}" text-anchor="middle" fill="#4a9eff" font-size="14" font-weight="600" font-family="'SF Pro Display', Arial, sans-serif">${day.contributionCount}</text>
                 </g>`;
         }
     });
@@ -230,27 +216,79 @@ function generateSVG(weekData, totalContributions) {
     
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
   <defs>
+    <!-- 배경 그라데이션 -->
     <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-      <stop offset="0%" style="stop-color:#0a0a20"/>
-      <stop offset="100%" style="stop-color:#1a1a40"/>
+      <stop offset="0%" style="stop-color:#05050f"/>
+      <stop offset="40%" style="stop-color:#0a0a1f"/>
+      <stop offset="70%" style="stop-color:#101025"/>
+      <stop offset="100%" style="stop-color:#1a1a35"/>
     </linearGradient>
+    
+    <!-- 물 반사 그라데이션 -->
+    <linearGradient id="waterGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#1a1a35"/>
+      <stop offset="100%" style="stop-color:#0a0a1a"/>
+    </linearGradient>
+    
+    <!-- 건물 그라데이션들 -->
+    <linearGradient id="buildingGrad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#3a4a5a"/>
+      <stop offset="100%" style="stop-color:#2a3a4a"/>
+    </linearGradient>
+    <linearGradient id="buildingGrad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#4a5a7a"/>
+      <stop offset="100%" style="stop-color:#3a4a6a"/>
+    </linearGradient>
+    <linearGradient id="buildingGrad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#5a4a7a"/>
+      <stop offset="100%" style="stop-color:#4a3a6a"/>
+    </linearGradient>
+    <linearGradient id="buildingGrad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#7a6a4a"/>
+      <stop offset="100%" style="stop-color:#5a4a3a"/>
+    </linearGradient>
+    
+    <!-- 달 글로우 -->
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:#fffff8"/>
+      <stop offset="60%" style="stop-color:#fffde0"/>
+      <stop offset="100%" style="stop-color:#fffde0; stop-opacity:0"/>
+    </radialGradient>
+    
+    <!-- 블러 필터 -->
+    <filter id="blur" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="4"/>
+    </filter>
+    
+    <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge>
+        <feMergeNode in="blur"/>
+        <feMergeNode in="SourceGraphic"/>
+      </feMerge>
+    </filter>
+    
     <style>
       @keyframes twinkle {
-        0%, 100% { opacity: 0.3; }
+        0%, 100% { opacity: 0.2; }
         50% { opacity: 1; }
       }
       @keyframes float {
         0%, 100% { transform: translateY(0); }
-        50% { transform: translateY(-2px); }
+        50% { transform: translateY(-3px); }
       }
       @keyframes windowFlicker {
-        0%, 85%, 100% { opacity: 1; }
-        90% { opacity: 0.6; }
+        0%, 92%, 100% { opacity: 1; }
+        95% { opacity: 0.5; }
       }
-      .star { animation: twinkle 2s ease-in-out infinite; }
-      .building { animation: float 4s ease-in-out infinite; }
-      .building:nth-child(odd) { animation-delay: 0.5s; }
-      .window { animation: windowFlicker 4s ease-in-out infinite; }
+      @keyframes shimmer {
+        0%, 100% { opacity: 0.15; }
+        50% { opacity: 0.25; }
+      }
+      .star { animation: twinkle 3s ease-in-out infinite; }
+      .building { animation: float 5s ease-in-out infinite; }
+      .window { animation: windowFlicker 6s ease-in-out infinite; }
+      .reflection { animation: shimmer 4s ease-in-out infinite; }
     </style>
   </defs>
   
@@ -261,24 +299,47 @@ function generateSVG(weekData, totalContributions) {
   ${stars}
   
   <!-- 달 -->
-  <circle cx="700" cy="50" r="20" fill="#ffffee" opacity="0.9"/>
-  <circle cx="707" cy="46" r="20" fill="url(#skyGradient)"/>
+  <circle cx="780" cy="70" r="45" fill="url(#moonGlow)" opacity="0.3"/>
+  <circle cx="780" cy="70" r="28" fill="#fffde8"/>
+  <circle cx="770" cy="65" r="5" fill="#f0f0d0" opacity="0.4"/>
+  <circle cx="788" cy="78" r="3" fill="#f0f0d0" opacity="0.3"/>
   
-  <!-- 땅 -->
-  <polygon points="0,330 ${width},330 ${width},${height} 0,${height}" fill="#1a1a2e"/>
-  <polygon points="0,330 400,300 ${width},330" fill="#252540"/>
+  <!-- 배경 빌딩 실루엣 -->
+  ${bgBuildings}
+  
+  <!-- 땅/물 -->
+  <rect x="0" y="${groundY}" width="${width}" height="${height - groundY}" fill="url(#waterGradient)"/>
+  
+  <!-- 수평선 하이라이트 -->
+  <line x1="0" y1="${groundY}" x2="${width}" y2="${groundY}" stroke="#3a4a6a" stroke-width="1" opacity="0.5"/>
+  
+  <!-- 건물 반사 -->
+  <g class="reflection">
+    ${reflections}
+  </g>
   
   <!-- 건물들 -->
   ${buildings}
   
   <!-- 타이틀 -->
-  <text x="400" y="30" text-anchor="middle" fill="white" font-family="Arial, sans-serif" font-size="18" font-weight="bold">
-    🏙️ ${USERNAME}'s Contribution City
+  <text x="${width/2}" y="35" text-anchor="middle" fill="#ffffff" font-family="'SF Pro Display', Arial, sans-serif" font-size="22" font-weight="600" filter="url(#glow)">
+    ${USERNAME}'s Contribution City
   </text>
   
-  <!-- 통계 -->
-  <text x="400" y="${height - 15}" text-anchor="middle" fill="#8b949e" font-family="Arial, sans-serif" font-size="12">
-    This Week: ${weekTotal} contributions | Total: ${totalContributions} contributions
+  <!-- 통계 바 -->
+  <rect x="${width/2 - 180}" y="${height - 55}" width="360" height="40" rx="20" fill="#0a0a15" opacity="0.7"/>
+  <text x="${width/2 - 100}" y="${height - 28}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="12">
+    This Week
+  </text>
+  <text x="${width/2 - 100}" y="${height - 12}" text-anchor="middle" fill="#4a9eff" font-family="'SF Pro Display', Arial, sans-serif" font-size="16" font-weight="600">
+    ${weekTotal}
+  </text>
+  <line x1="${width/2}" y1="${height - 45}" x2="${width/2}" y2="${height - 25}" stroke="#3a4a5a" stroke-width="1"/>
+  <text x="${width/2 + 100}" y="${height - 28}" text-anchor="middle" fill="#8a9aaa" font-family="'SF Pro Display', Arial, sans-serif" font-size="12">
+    Total
+  </text>
+  <text x="${width/2 + 100}" y="${height - 12}" text-anchor="middle" fill="#4a9eff" font-family="'SF Pro Display', Arial, sans-serif" font-size="16" font-weight="600">
+    ${totalContributions}
   </text>
 </svg>`;
 
@@ -298,7 +359,6 @@ async function main() {
         
         const svg = generateSVG(weekData, calendar.totalContributions);
         
-        // 출력 디렉토리 생성
         if (!fs.existsSync('profile-3d-contrib')) {
             fs.mkdirSync('profile-3d-contrib');
         }
