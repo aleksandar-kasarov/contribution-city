@@ -154,7 +154,7 @@ function generateSVG(weekData, totalContributions) {
         } else {
             // 창문 생성
             let windows = '';
-            const windowRows = Math.floor((bHeight - 40) / 30); // 위아래 여백 확보
+            const windowRows = Math.floor((bHeight - 20) / 30);
             const windowCols = 4;
             const winWidth = 12;
             const winHeight = 16;
@@ -167,7 +167,7 @@ function generateSVG(weekData, totalContributions) {
                     const wy = y + 20 + row * winGapY;
                     
                     // 창문이 건물 바닥 아래로 내려가지 않도록 체크
-                    if (wy + winHeight > y + bHeight - 10) continue;
+                    if (wy + winHeight > y + bHeight) continue;
                     
                     const isLit = Math.random() > 0.25;
                     const warmth = Math.random();
