@@ -1,37 +1,85 @@
-# 🏙️ Contribution City
-
-GitHub contribution을 도시 스카이라인으로 시각화합니다.
+# GitHub Contribution City
 
 ![Contribution City](./contribution-city.svg)
 
-## 사용법
+[English](README.md) | [한국어](docs/README.ko.md)
 
-1. 이 저장소를 fork 하거나 파일들을 복사하세요
-2. `Actions` 탭에서 워크플로우를 활성화하세요
-3. 수동으로 실행하거나 매일 자동 실행됩니다
+---
 
-## 파일 구조
+## Overview
+
+This project generates an isometric 3D city based on your GitHub commits from the last 7 days. Each building represents a day's commits — the more commits, the bigger the building!
+
+<br>
+
+## Building Types
+
+| Commits | Building | Preview |
+|---------|----------|---------|
+| 0 | No building | - |
+| 1-3 | Lantern (Xsmall.svg) | ![Xsmall](./assets/Xsmall.svg) |
+| 4-6 | Blue House (Small.svg) | ![Small](./assets/Small.svg) |
+| 7-9 | Mansion (Middle.svg) | ![Middle](./assets/Middle.svg) |
+| 10+ | Red Tower (Big.svg) | ![Big](./assets/Big.svg) |
+
+<br>
+
+## Setup
+
+### Step 1. Create Repository
+
+- Fork this repository.
+
+### Step 2. Create Personal Access Token
+
+1. GitHub Settings → Developer settings → Personal access tokens → Tokens (classic)
+2. Generate new token with `repo` scope
+3. Add the token to repository Secrets as `PAT_TOKEN`
+
+### Step 3. Run Workflow
+
+1. Actions → Generate Contribution City → Run workflow
+2. After completion, add to your README.md:
+
+```md
+![Contribution City](https://raw.githubusercontent.com/{{USERNAME}}/{{REPO_NAME}}/main/contribution-city.svg)
+```
+
+> Replace `{{USERNAME}}` and `{{REPO_NAME}}` with your GitHub username and repository name.
+
+## Project Structure
 
 ```
-├── generate.js                          # SVG 생성 스크립트
-├── .github/workflows/contribution-city.yml  # GitHub Actions 워크플로우
-└── profile-3d-contrib/
-    └── contribution-city.svg            # 생성된 SVG
+your-repo/
+├── .github/
+│   └── workflows/
+│       └── generate-city.yml
+├── assets/
+│   ├── font/
+│   │   └── Galmuri11.ttf
+│   ├── Base.svg
+│   ├── Xsmall.svg, Small.svg, Middle.svg, Big.svg
+│   ├── MON.svg ~ SUN.svg
+│   └── 0.svg ~ 9.svg
+├── generate-city.js
+└── README.md
 ```
 
-## 커스터마이징
+## Environment Variables
 
-`generate.js`에서 수정 가능:
-- `buildingColors`: 건물 색상
-- `maxHeight`: 최대 건물 높이
-- 별, 달, 배경 등
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `PAT_TOKEN` | Yes | Access token |
+| `GITHUB_USERNAME` | Yes | Target GitHub username |
 
-## 레벨 기준
+## Acknowledgements
 
-| 레벨 | Contributions | 건물 타입 |
-|------|---------------|-----------|
-| 0 | 0 | 🌳 공원 |
-| 1 | 1-3 | 🏠 주택 |
-| 2 | 4-6 | 🏢 빌딩 |
-| 3 | 7-9 | 🏬 고층 |
-| 4 | 10+ | 🗼 타워 |
+This project was heavily inspired by [github-profile-3d-contrib](https://github.com/yoshi389111/github-profile-3d-contrib) by yoshi389111.
+
+## License
+
+MIT License
+
+## Font
+
+- [Galmuri11](https://github.com/quiple/galmuri) by quiple
