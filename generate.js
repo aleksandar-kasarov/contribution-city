@@ -169,12 +169,36 @@ function createNumberSVG(count, baseX, baseY) {
     return result;
 }
 
+// 폰트 파일을 Base64로 인코딩
+function loadFontBase64() {
+    const fontPath = path.join(assetsDir, 'font', 'Galmuri11.ttf');
+    if (fs.existsSync(fontPath)) {
+        const fontData = fs.readFileSync(fontPath);
+        return fontData.toString('base64');
+    }
+    console.warn('Font file not found:', fontPath);
+    return null;
+}
+
 // 메인 SVG 생성
 async function generateContributionCity() {
     console.log('Fetching GitHub contributions...');
     
+    // 폰트 로드
+    const fontBase64 = loadFontBase64();
+    
     const calendar = await fetchContributions();
     let weekData = calendar ? getLastWeekContributions(calendar) : [];
+    
+    // 전체 커밋 수 계산
+    let totalCommits = 0;
+    if (calendar && calendar.weeks) {
+        calendar.weeks.forEach(week => {
+            week.contributionDays.forEach(day => {
+                totalCommits += day.contributionCount;
+            });
+        });
+    }
     
     // 테스트 데이터 (API가 없을 경우) - 최근 7일 시뮬레이션
     const today = new Date();
@@ -194,14 +218,20 @@ async function generateContributionCity() {
     // API 데이터가 없으면 테스트 데이터 사용
     if (weekData.length !== 7) {
         weekData = testData;
+        totalCommits = 1234; // 테스트용 총 커밋 수
         console.log('Using test data (API unavailable)');
     }
+    
+    // 주간 커밋 수 계산
+    const weekCommits = weekData.reduce((sum, d) => sum + d.contributionCount, 0);
     
     console.log('Last 7 days data:');
     weekData.forEach((d, i) => {
         const dayName = WEEKDAY_NAMES[new Date(d.date).getDay()];
         console.log(`  ${i + 1}. ${d.date} (${dayName}): ${d.contributionCount} commits`);
     });
+    console.log(`Total commits: ${totalCommits}`);
+    console.log(`Week commits: ${weekCommits}`);
     
     // Base SVG 로드
     const baseSvg = loadSVGContent('Base.svg');
@@ -214,7 +244,65 @@ async function generateContributionCity() {
     const viewBoxMatch = baseSvg.match(/viewBox="([^"]+)"/);
     const viewBox = viewBoxMatch ? viewBoxMatch[1] : '0 0 2166 1280';
     
-    let svgContent = `<svg width="2166" height="1280" viewBox="${viewBox}" fill="none" xmlns="http://www.w3.org/2000/svg">\n`;
+    let svgContent = `<svg width="2166" height="1280" viewBox="${viewBox}" fill="none" xmlns="http://www.w3.org/2000/svg">
+<defs>
+    <style type="text/css">
+        @font-face {
+            font-family: 'Galmuri11';
+            src: url('data:font/ttf;base64,${fontBase64 || ''}') format('truetype');
+        }
+        .stats-text {
+            font-family: 'Galmuri11', monospace;
+            font-size: 36px;
+            fill: #ffffff;
+        }
+        .stats-label {
+            font-family: 'Galmuri11', monospace;
+            font-size: 28px;
+            fill: #9CA3AF;
+        }
+    </style>
+</defs>
+
+<!-- 밤하늘 배경 -->
+<rect width="2166" height="1280" fill="#0d1117"/>
+
+<!-- 별들 -->
+<circle cx="150" cy="80" r="2" fill="white" opacity="0.8"/>
+<circle cx="320" cy="120" r="1.5" fill="white" opacity="0.6"/>
+<circle cx="480" cy="60" r="2" fill="white" opacity="0.9"/>
+<circle cx="620" cy="150" r="1" fill="white" opacity="0.5"/>
+<circle cx="780" cy="40" r="2.5" fill="white" opacity="0.7"/>
+<circle cx="950" cy="100" r="1.5" fill="white" opacity="0.8"/>
+<circle cx="1100" cy="70" r="2" fill="white" opacity="0.6"/>
+<circle cx="1250" cy="130" r="1" fill="white" opacity="0.9"/>
+<circle cx="1400" cy="50" r="2" fill="white" opacity="0.5"/>
+<circle cx="1550" cy="90" r="1.5" fill="white" opacity="0.7"/>
+<circle cx="1700" cy="140" r="2" fill="white" opacity="0.8"/>
+<circle cx="1850" cy="60" r="1" fill="white" opacity="0.6"/>
+<circle cx="2000" cy="110" r="2.5" fill="white" opacity="0.9"/>
+<circle cx="100" cy="200" r="1" fill="white" opacity="0.5"/>
+<circle cx="250" cy="180" r="2" fill="white" opacity="0.7"/>
+<circle cx="400" cy="220" r="1.5" fill="white" opacity="0.8"/>
+<circle cx="550" cy="190" r="1" fill="white" opacity="0.6"/>
+<circle cx="700" cy="240" r="2" fill="white" opacity="0.9"/>
+<circle cx="850" cy="170" r="1.5" fill="white" opacity="0.5"/>
+<circle cx="1000" cy="210" r="2" fill="white" opacity="0.7"/>
+<circle cx="1150" cy="250" r="1" fill="white" opacity="0.8"/>
+<circle cx="1300" cy="190" r="2.5" fill="white" opacity="0.6"/>
+<circle cx="1450" cy="230" r="1.5" fill="white" opacity="0.9"/>
+<circle cx="1600" cy="200" r="2" fill="white" opacity="0.5"/>
+<circle cx="1750" cy="260" r="1" fill="white" opacity="0.7"/>
+<circle cx="1900" cy="180" r="2" fill="white" opacity="0.8"/>
+<circle cx="2050" cy="220" r="1.5" fill="white" opacity="0.6"/>
+
+<!-- TOTAL / WEEK 텍스트 -->
+<text x="50" y="50" class="stats-label">TOTAL:</text>
+<text x="180" y="50" class="stats-text">${totalCommits}</text>
+<text x="50" y="90" class="stats-label">WEEK:</text>
+<text x="180" y="90" class="stats-text">${weekCommits}</text>
+
+`;
     
     // Base 추가
     svgContent += extractSVGInner(baseSvg);
