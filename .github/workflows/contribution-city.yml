@@ -4,9 +4,10 @@ on:
   schedule:
     - cron: "0 18 * * *"  # 매일 03:00 KST (18:00 UTC)
   workflow_dispatch:  # 수동 실행 가능
-
+  
 jobs:
   build:
+    if: github.repository != 'mna11/contribution-city'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
