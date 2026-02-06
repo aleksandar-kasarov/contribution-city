@@ -20,7 +20,7 @@ jobs:
         run: node generate-city.js
         env:
           GITHUB_TOKEN: ${{ secrets.PAT_TOKEN }}
-          GITHUB_USERNAME: ${{ github.repository_owner }}
+          GITHUB_USERNAME: aleksandar-kasarov
 
       - name: Commit & Push
         run: |
